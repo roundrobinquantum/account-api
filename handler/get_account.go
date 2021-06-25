@@ -2,14 +2,17 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/roundrobinquantum/account-api/response"
-	client_for_account "github.com/roundrobinquantum/api-client/client"
+	apiClient "github.com/roundrobinquantum/api-client/client"
 	"net/http"
 	"strconv"
 )
 
-var GetById = func(clt *client_for_account.Client, uri string) func(c *gin.Context) {
+const getPath = "%s/accounts/%d"
+
+var GetById = func(clt *apiClient.Client, address string) func(c *gin.Context) {
 	return func(c *gin.Context) {
 		accountId, err := strconv.Atoi(c.Param("accountId"))
 
@@ -23,22 +26,21 @@ var GetById = func(clt *client_for_account.Client, uri string) func(c *gin.Conte
 			return
 		}
 
-		req := client_for_account.Get(uri).Build()
+		uri := fmt.Sprintf(getPath, address, accountId)
+		req := apiClient.Get(uri).Build()
 		statusCode, respBody, err := clt.End(req)
 
 		if err != nil || isSuccessStatusCode(statusCode) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Can not parse accountId!"}) //todo
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-
 
 		var resp response.AccountType
-		err=json.Unmarshal(respBody,&resp)
-		if err!=nil{
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Can not parse accountId!"}) //todo
+		err = json.Unmarshal(respBody, &resp)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-
 
 		c.JSON(http.StatusOK, resp)
 	}

@@ -13,8 +13,11 @@ type Config struct {
 }
 
 func GetConfigFromEnvVariable() *Config {
-
 		uri := os.Getenv("URI")
+
+		if uri == "" {
+			panic("Cannot get URI")
+		}
 
 		connTimeout, err := strconv.Atoi(os.Getenv("ConnTimeout"))
 
